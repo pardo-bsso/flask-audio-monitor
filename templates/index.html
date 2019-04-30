@@ -1,58 +1,92 @@
 <html>
 <head>
     <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/js-vumeter.js') }}"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/js-vumeter.css') }}">
+
     <script type="text/javascript" charset="utf-8">
 
         var socket = io();
+        var meters = {};
+        var _allMeters = [];
+
 
         socket.on('device-removed', function(payload) {
-            var containerSelector = 'container_' + payload.internal_name;
-            var container = document.getElementById(containerSelector);
+            var name = payload.internal_name;
+
+            var channelMeters = meters[name];
+            var meter;
+            while (meter = channelMeters.pop()) {
+              meter.stop();
+            }
+
+            delete meters[name];
+
+            var container = document.getElementById('container_' + name);
             if (container) {
                 container.remove();
             }
         });
 
         socket.on('level', function(payload) {
+            var name = payload.internal_name;
+            var channelMeters = meters[name];
+
             var peaks = payload.peak;
-            var containerSelector = 'container_' + payload.internal_name;
+            var containerSelector = 'container_' + name;
+
             var container = document.getElementById(containerSelector);
+
+            if (!channelMeters) {
+              channelMeters = meters[name] = [];
+            }
             if (!container) {
                 container = document.createElement('div');
                 container.id = containerSelector;
 
-                var title = document.createElement('h1');
+                container.innerHTML = '<h1 class="device_name"> </h1> <div class="meters"> </div>'
+
+                var title = container.querySelector('.device_name');
                 title.textContent = payload.display_name + ' ( ' + payload.internal_name + ' ):';
-                title.classList = 'device_name';
-                container.appendChild(title);
 
                 document.getElementById('devices_container').appendChild(container);
             }
 
+            var meters_container = container.querySelector('.meters');
+
             for (var idx=0; idx < peaks.length; idx++) {
                 var peak = peaks[idx];
-                var selector = [containerSelector, 'channel', idx].join('_');
-                var bar = document.getElementById(selector);
-                if (!bar) {
-                    bar = document.createElement('div');
-                    bar.className = 'bar';
-                    bar.id = selector;
-                    container.appendChild(bar);
+
+                var meter = channelMeters[idx];
+
+                if (!meter) {
+                  var selector = [containerSelector, 'channel', idx].join('_');
+                  var meter_element = document.createElement('div');
+                  meter_element.id = selector;
+                  meters_container.appendChild(meter_element);
+                  meter = channelMeters[idx] = new PPM_Meter(meter_element, {showFps: false});
+                  meter.start();
+                  _allMeters.push(meter)
                 }
-                var length = 98 * Math.pow(10, peak / 10);
-                bar.style.width = length + 'vw';
+
+                var level = Math.pow(10, peak / 10);
+                meter.setLevel(level);
             }
         });
     </script>
 
     <style type="text/css">
-        .bar {
+        body {
+          background: #002b36;
+          color: #93a1a1;
+          font-family: Lucida Console, Courier, monospace;
+          font-weight: bold;
+        }
+        .js-vumeter {
             height: 2vh;
             min-width: 0vw;
-            max-width: 98vw;
-            border: 0.25vw solid red;
+            /*max-width: 98vw;*/
             margin-bottom: 1vw;
-            background: black;
         }
 
         .device_name {
