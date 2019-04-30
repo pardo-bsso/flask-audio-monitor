@@ -1,0 +1,60 @@
+.js-vumeter {
+  background: linear-gradient(to right, #00ff00 0%,#00ff00 60%,#ffff00 70%,#ffff00 85%,#ff0000 100%);
+  display: flex;
+  flex-grow: 1;
+  align-items: center;
+  width: 100%;
+  height: 25px;
+  rotateY(0deg);
+  translateZ(0);
+}
+
+.js-vumeter.vertical {
+  background: linear-gradient(to top, #00ff00 0%,#00ff00 60%,#ffff00 70%,#ffff00 85%,#ff0000 100%);
+  flex-direction: column-reverse;
+  width: 25px;;
+  height: 100%;
+}
+
+.js-vumeter .fps-meter {
+  width: 3ex;
+  min-height: 2ex;
+  height: 100%;
+  background: white;
+  overflow: hidden;
+  display: none;
+}
+
+.js-vumeter.show-fps .fps-meter {
+  display: inline-block;
+}
+
+.js-vumeter .bar {
+  will-change: width;
+  height: 100%;
+  display: flex;
+  align-self: center;
+}
+
+.js-vumeter .bar-level {
+  background: transparent;
+}
+
+.js-vumeter .bar-opaque {
+  display: flex;
+  flex-grow: 1;
+  opacity: 0.7;
+  background: black;
+  transition: background-color 0.5s;
+}
+
+.js-vumeter.vertical > .bar {
+  will-change: height;
+  width: 100%;
+  height: 0;
+}
+
+.js-vumeter .above-peak-limit {
+  background: red ;
+  transition: background-color 0s;
+}
